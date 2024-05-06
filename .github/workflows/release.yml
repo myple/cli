@@ -35,7 +35,7 @@ jobs:
         with:
           go-version: stable
 
-      - name: Setup bun
+      - name: Set up Bun
         uses: oven-sh/setup-bun@v1
 
       - name: Build
