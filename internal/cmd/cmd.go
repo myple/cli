@@ -24,7 +24,7 @@ const (
 
 var (
 	// global flags
-	env   string
+	// env   string
 	debug bool
 )
 
@@ -48,7 +48,10 @@ func init() {
 
 	// TODO check if there is a way to highlight that this flag as already been set by env var like in clap
 	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Debug mode")
-	viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
+	err := viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to bind debug flag")
+	}
 
 	rootCmd.PersistentFlags().BoolP("help", "h", false, "Output usage information")
 	rootCmd.SetVersionTemplate(fmt.Sprintf("%s %s", Package, Version))
