@@ -5,6 +5,8 @@ set -euo pipefail
 RESET="\033[0m"
 RED="\033[0;31m"
 GREEN="\033[0;32m"
+YELLOW="\033[0;33m"
+BLUE="\033[0;34m"
 
 # This script is for installing the latest version of Myple CLI.
 
@@ -15,11 +17,11 @@ usage() {
     echo "  ${GREEN}myple-installer[EXE]${RESET} [OPTIONS]"
     echo ""
     echo "Options:"
-    echo "  ${GREEN}-v, --version${RESET}"
+    echo "  ${YELLOW}-v, --version${RESET}"
     echo "          Version of Myple CLI to install"
-    echo "  ${GREEN}-i, --install${RESET}"
+    echo "  ${YELLOW}-i, --install${RESET}"
     echo "          Directory to install Myple CLI"
-    echo "  ${GREEN}-h, --help${RESET}"
+    echo "  ${YELLOW}-h, --help${RESET}"
     echo "          Output usage information"
 }
 
@@ -68,19 +70,22 @@ detect_profile() {
 
   local _detected_profile
   _detected_profile=''
-  local _shelltype
-  _shelltype=$(basename "/$SHELL")
+  local _shell
+  _shell=$(basename "/$SHELL")
 
-  if [ "$_shelltype" = "bash" ]; then
+  if [ "$_shell" = "bash" ]; then
     if [ -f "$HOME/.bashrc" ]; then
       _detected_profile="$HOME/.bashrc"
     elif [ -f "$HOME/.bash_profile" ]; then
       _detected_profile="$HOME/.bash_profile"
     fi
-  elif [ "$_shelltype" = "zsh" ]; then
+  elif [ "$_shell" = "zsh" ]; then
     _detected_profile="$HOME/.zshrc"
-  elif [ "$_shelltype" = "fish" ]; then
+  elif [ "$_shell" = "fish" ]; then
     _detected_profile="$HOME/.config/fish/conf.d/myple.fish"
+    if [ ! -f "$_detected_profile" ]; then
+      touch "$_detected_profile"
+    fi
   fi
 
   if [ -z "$_detected_profile" ]; then
@@ -94,6 +99,9 @@ detect_profile() {
       _detected_profile="$HOME/.zshrc"
     elif [ -d "$HOME/.config/fish" ]; then
       _detected_profile="$HOME/.config/fish/conf.d/myple.fish"
+      if [ ! -f "$_detected_profile" ]; then
+        touch "$_detected_profile"
+      fi
     fi
   fi
 
@@ -103,15 +111,34 @@ detect_profile() {
 }
 
 update_profile() {
-  _profile = $(detect_profile)
+  local _profile
+  _profile=$(detect_profile)
+
+  local _shell
+  _shell=$(basename "/$SHELL")
 
   if [ -z "$_profile" ]; then
     echo "${RED}error${RESET}: unable to detect profile file location"
-    exit 1
+    echo ""
+    echo "Please add the following lines to the correct file:"
+    echo ""
+    echo "# Myple CLI"
+    echo "export PATH=\"\$HOME/.myple/bin:\$PATH\""
+    echo ""
+    echo "and restart your shell."
   fi
 
   if ! grep -q "\.myple" $_profile; then
     echo "\n# Myple CLI\nexport PATH=\"\$HOME/.myple/bin:\$PATH\"\n" >> $_profile
+    $HOME/.myple/bin/myple completion $_shell >> $_profile
+
+    echo "${GREEN}info${RESET}: completion script has been added to $_profile"
+    echo ""
+    echo "Please restart your shell or run"
+    echo ""
+    echo "  ${YELLOW}source $_profile${RESET}"
+    echo ""
+    echo "to start using Myple CLI."
   fi
 }
 
@@ -119,8 +146,11 @@ main() {
     need_cmd uname
     need_cmd curl
     need_cmd tar
+    need_cmd grep
     need_cmd mkdir
+    need_cmd chmod
     need_cmd rm
+    need_cmd mv
 
     local _version
     _version="${MYPLE_VERSION:-latest}"
@@ -174,33 +204,47 @@ main() {
     local _exe
     _exe="$_bin_dir/myple"
 
+    if [[ "$_version" == "latest" ]]; then
+        _version=$(curl -s https://api.github.com/repos/myple/cli/releases/latest | grep tag_name | cut -d '"' -f 4)
+    fi
+
     local _file
     _file="myple-$_version-$_os-$_arch.tar.gz"
-    local _url
-    _url="https//github.com/myple/cli/releases/download/$_version/$_file"
 
-    echo "Downloading Myple CLI..."
-    curl -sL "$_url" -o "$_tmp_dir/$_file" || (echo "${RED}error${RESET}: failed to download Myple CLI"; exit 1)
+    local _url
+    _url="https://github.com/myple/cli/releases/download/$_version/$_file"
+
+    echo "Myple CLI version $_version"
+    echo "Downloading..."
+    curl -fsL "$_url" -o "$_install/.myple/$_file"
+    if [ $? -ne 0 ]; then
+        echo "${RED}error${RESET}: failed to download Myple CLI"
+        exit 1
+    fi
+
     echo "${GREEN}info${RESET}: Myple CLI has been downloaded successfully"
 
-    echo "Installing Myple CLI..."
-    tar -xzf $_file -C $_tmp_dir || (echo "${RED}error${RESET}: failed to extract Myple CLI"; exit 1)
+    echo "Installing..."
+    tar -xzf "$_install/.myple/$_file" -C $_tmp_dir
+    if [ $? -ne 0 ]; then
+        echo "${RED}error${RESET}: failed to extract Myple CLI"
+        exit 1
+    fi
+
     chmod +x "$_tmp_dir/myple"
     mv "$_tmp_dir/myple" "$_exe"
-    rm "$_tmp_dir/$_file"
-    echo "${GREEN}info${RESET}: Myple CLI has been installed successfully"
+    rm "$_install/.myple/$_file"
+    rm -rf "$_tmp_dir"
+    echo "${GREEN}info${RESET}: Myple CLI has been installed successfully to $_exe"
 
     echo "Adding completion script to shell profile..."
-    echo "${GREEN}info${RESET}: completion script has been added to shell profile"
-
-    echo "Myple CLI has been installed successfully to $_exe"
     update_profile
 
     echo ""
-    echo "You can now run 'myple login' to authenticate with Myple,"
-    echo "or run 'myple help' to get know more about the available commands."
+    echo "You can now run ${YELLOW}'myple login'${RESET} to authenticate with Myple,"
+    echo "or run ${YELLOW}'myple help'${RESET} to get know more about the available commands."
     echo ""
-    echo "For more information, visit ${GREEN}https://docs.myple.io/cli${RESET}"
+    echo "For more information, visit ${BLUE}https://docs.myple.io/cli${RESET}"
 }
 
 main "$@" || exit 1
