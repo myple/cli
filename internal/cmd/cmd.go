@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"go.myple.io/cli/internal/utils"
 )
 
 const (
@@ -56,14 +57,18 @@ func init() {
 	rootCmd.PersistentFlags().BoolP("help", "h", false, "Output usage information")
 	rootCmd.SetVersionTemplate(fmt.Sprintf("%s %s", Package, Version))
 
-	// - cmds
+	// - core
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(deployCmd)
 	rootCmd.AddCommand(logsCmd)
-	rootCmd.AddCommand(docsCmd)
+
+	// - auth
 	rootCmd.AddCommand(loginCmd)
 	rootCmd.AddCommand(logoutCmd)
 	rootCmd.AddCommand(whoamiCmd)
 
-	ApplyStyle(rootCmd)
+	// - misc
+	rootCmd.AddCommand(docsCmd)
+
+	utils.ApplyStyle(rootCmd)
 }

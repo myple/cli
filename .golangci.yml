@@ -5,3 +5,4 @@ linters:
   enable:
     - gofmt
     - revive
+    - nolintlint
