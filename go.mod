@@ -5,7 +5,7 @@ go 1.22.2
 require (
 	github.com/charmbracelet/lipgloss v0.10.0
 	github.com/fatih/color v1.17.0
-	github.com/rs/zerolog v1.32.0
+	github.com/rs/zerolog v1.33.0
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
