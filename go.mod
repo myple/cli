@@ -3,7 +3,7 @@ module go.myple.io/cli
 go 1.22.2
 
 require (
-	github.com/charmbracelet/lipgloss v0.12.1
+	github.com/charmbracelet/lipgloss v1.0.0
 	github.com/fatih/color v1.17.0
 	github.com/rs/zerolog v1.33.0
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
@@ -13,7 +13,7 @@ require (
 
 require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
-	github.com/charmbracelet/x/ansi v0.1.4 // indirect
+	github.com/charmbracelet/x/ansi v0.4.2 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
